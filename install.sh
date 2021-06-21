@@ -10,6 +10,6 @@ if [ "$(id -u)" != "0" ]; then
     fi
 fi
 
-wget https://raw.githubusercontent.com/retspen/webvirtcloud/master/webvirtcloud.sh
+wget https://github.com/Thr0TT1e/webvirtcloud/raw/master/webvirtcloud.sh
 chmod 744 webvirtcloud.sh
 ./webvirtcloud.sh 2>&1 | tee -a /var/log/webvirtcloud-install.log
