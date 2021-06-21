@@ -99,7 +99,7 @@ log () {
 
 install_packages () {
   case $distro in
-    ubuntu|debian)
+    ubuntu|debian|AstraLinuxSE)
       for p in $PACKAGES; do
         if dpkg -s "$p" >/dev/null 2>&1; then
           echo "  * $p already installed"
@@ -141,7 +141,7 @@ configure_nginx () {
 
   chown -R "$nginx_group":"$nginx_group" /var/lib/nginx
   # Copy new configuration and webvirtcloud.conf
-  echo "  * Copying Nginx configuration"
+  echo "  * Copying Nginx configuration ($distro)"
   cp "$APP_PATH"/conf/nginx/"$distro"_nginx.conf /etc/nginx/nginx.conf
   cp "$APP_PATH"/conf/nginx/webvirtcloud.conf /etc/nginx/conf.d/
 
@@ -166,7 +166,7 @@ configure_supervisor () {
 create_user () {
   echo "* Creating webvirtcloud user."
 
-  if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ] ; then
+  if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ] || [ "$distro" == "AstraLinuxSE" ] ; then
     adduser --quiet --disabled-password --gecos '""' "$APP_USER"
   else
     adduser "$APP_USER"
@@ -349,6 +349,8 @@ case $distro in
     ;;
 esac
 
+echo "     Дистрибутив - $distro"
+
 setupfqdn=default
 until [[ $setupfqdn == "yes" ]] || [[ $setupfqdn == "no" ]]; do
   echo -n "  Q. Do you want to configure fqdn for Nginx? (y/n) "
@@ -426,6 +428,31 @@ case $distro in
     restart_nginx
   fi
   ;;
+  AstraLinuxSE)
+    # Install for Debian 9.x / 10.x
+    tzone=\'$(cat /etc/timezone)\'
+
+    echo -n "* Updating installed packages."
+    log "apt-get update && apt-get -y upgrade" & pid=$!
+    progress
+
+    echo "*  Installing OS requirements."
+    PACKAGES="git virtualenv python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
+    install_packages
+
+    set_hosts
+
+    install_webvirtcloud
+
+#    echo "* Configuring Nginx."
+#    configure_nginx
+
+#    echo "* Configuring Supervisor."
+#    configure_supervisor
+#
+#    restart_supervisor
+#    restart_nginx
+  ;;
   ubuntu)
  if [ "$version" == "18.04" ] || [ "$version" == "20.04" ]; then
     # Install for Ubuntu 18 / 20
@@ -493,7 +520,7 @@ esac
 
 
 echo ""
-echo "  ***Open http://$fqdn to login to webvirtcloud.***"
+echo "  ***Open http://$fqdn to login and password to: admin.***"
 echo ""
 echo ""
 echo "* Cleaning up..."
