@@ -349,7 +349,7 @@ case $distro in
     ;;
 esac
 
-echo "     Дистрибутив - $distro"
+echo -e "     \033[1;31mДистрибутив - $distro, версия - $version\033[0m"
 
 setupfqdn=default
 until [[ $setupfqdn == "yes" ]] || [[ $setupfqdn == "no" ]]; do
@@ -402,7 +402,8 @@ echo ""
 
 case $distro in
   debian)
-  if [[ "$version" -ge 9 ]]; then
+  # shellcheck disable=SC2072
+  if [[ "$version" -ge 9 ]] || [[ "$version" -ge 1.6 ]]; then
     # Install for Debian 9.x / 10.x
     tzone=\'$(cat /etc/timezone)\'
 
