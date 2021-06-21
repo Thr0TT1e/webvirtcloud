@@ -325,7 +325,7 @@ case $distro in
     supervisor_conf_path=/etc/supervisor/conf.d
     supervisor_file_name=webvirtcloud.conf
     ;;
-  *debian*)
+  *debian*|*AstraLinuxSE*)
     echo "  The installer has detected $distro version $version codename $codename."
     distro=debian
     nginx_group=www-data
