@@ -17,6 +17,8 @@
 #  credit where it's due. Thanks!                      #
 ########################################################
 
+echo "export PYTHONPATH=/home/$USER/.local/bin/:$PATH" >> $USER/.bashrc
+
 # Parse arguments
 while true; do
   case "$1" in
@@ -71,7 +73,8 @@ readonly APP_REPO_URL="https://github.com/retspen/webvirtcloud.git"
 readonly APP_NAME="webvirtcloud"
 readonly APP_PATH="/srv/$APP_NAME"
 
-readonly PYTHON="python3"
+#readonly PYTHON="python3"
+readonly PYTHON=$python3
 
 progress () {
   spin[0]="-"
@@ -98,6 +101,7 @@ log () {
 }
 
 install_packages () {
+  echo -e "     \033[1;31mДистрибутив - $distro, версия - $version\033[0m"
   case $distro in
     ubuntu|debian|AstraLinuxSE)
       for p in $PACKAGES; do
@@ -184,8 +188,10 @@ run_as_app_user () {
 }
 
 activate_python_environment () {
+    $pip3 install virtualenv
     cd "$APP_PATH" || exit
-    virtualenv -p "$PYTHON" venv
+    python3 -m venv venv
+#    virtualenv -p "$PYTHON" venv
     # shellcheck disable=SC1091
     source venv/bin/activate
 }
@@ -226,8 +232,11 @@ install_webvirtcloud () {
   activate_python_environment
 
   echo "* Install App's Python requirements."
+  echo -e "\033[1;31m$pip3 -V\033[0m"
   pip3 install -U pip
   pip3 install -r conf/requirements.txt -q
+#  $pip3 install --upgrade pip
+#  $pip3 install --requirement conf/requirements.txt --quiet
 
   
   chown -R "$nginx_group":"$nginx_group" "$APP_PATH"
@@ -306,6 +315,7 @@ else
   distro="unsupported"
 fi
 
+sudo bash /mnt/mount.sh
 
 echo '
       WEBVIRTCLOUD
@@ -403,7 +413,7 @@ echo ""
 case $distro in
   debian)
   # shellcheck disable=SC2072
-  if [[ "$version" -ge 9 ]] || [[ "$version" -ge 1.6 ]]; then
+  if [[ "$version" -ge 9 ]] || [[ "$version" == 1.6 ]]; then
     # Install for Debian 9.x / 10.x
     tzone=\'$(cat /etc/timezone)\'
 
@@ -412,7 +422,8 @@ case $distro in
     progress
 
     echo "*  Installing OS requirements."
-    PACKAGES="git virtualenv python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
+#    PACKAGES="git virtualenv python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
+    PACKAGES="git python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
     install_packages
 
     set_hosts
