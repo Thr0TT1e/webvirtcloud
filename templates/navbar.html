@@ -4,18 +4,18 @@
 <!-- Fixed navbar -->
 <nav class="navbar navbar-expand-md navbar-dark bg-primary mb-3" aria-label="Main top navbar">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'index' %}">WebVirtCloud</a>
+    <a class="navbar-brand" href="{% url 'index' %}">КП КОП 2.0</a>
     <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="navbar-nav mr-auto mt-2 mt-md-0">
         <li class="nav-item {% class_active request '^/instances' %}">
-            <a class="nav-link" href="{% url 'instances:index' %}"><i class="fa fa-fw fa-desktop"></i> {% trans "Instances" %}</a>
+            <a class="nav-link" href="{% url 'instances:index' %}"><i class="fa fa-fw fa-desktop"></i> {% trans "Экземпляры" %}</a>
         </li>
         {% if request.user.is_superuser %}
         <li class="nav-item {% class_active request '^/computes' %}">
-            <a class="nav-link" href="{% url 'computes' %}"><i class="fa fa-fw fa-server"></i> {% trans "Computes" %}</a>
+            <a class="nav-link" href="{% url 'computes' %}"><i class="fa fa-fw fa-server"></i> {% trans "Ноды" %}</a>
         </li>
         {% endif %}
       </ul>
@@ -26,10 +26,10 @@
             {% icon 'wrench' %}
           </a>
           <div class="dropdown-menu" aria-labelledby="administration">
-            <a class="dropdown-item {% view_active request 'admin:user_list' %}" href="{% url 'admin:user_list' %}">{% icon 'user-plus' %} {% trans "Users" %}</a>
-            <a class="dropdown-item {% view_active request 'admin:group_list' %}" href="{% url 'admin:group_list' %}">{% icon 'users' %} {% trans "Groups" %}</a>
-            <a class="dropdown-item {% view_active request 'admin:logs' %}" href="{% url 'admin:logs' %}">{% icon 'list-alt' %} {% trans "Logs" %}</a>
-            <a class="dropdown-item {% view_active request 'appsettings' %}" href="{% url 'appsettings' %}">{% icon 'cogs' %} {% trans "Settings" %}</i></a>
+            <a class="dropdown-item {% view_active request 'admin:user_list' %}" href="{% url 'admin:user_list' %}">{% icon 'user-plus' %} {% trans "Пользователи" %}</a>
+            <a class="dropdown-item {% view_active request 'admin:group_list' %}" href="{% url 'admin:group_list' %}">{% icon 'users' %} {% trans "Группы" %}</a>
+            <a class="dropdown-item {% view_active request 'admin:logs' %}" href="{% url 'admin:logs' %}">{% icon 'list-alt' %} {% trans "Логи" %}</a>
+            <a class="dropdown-item {% view_active request 'appsettings' %}" href="{% url 'appsettings' %}">{% icon 'cogs' %} {% trans "Настройки" %}</i></a>
           </div>
         </li>
         {% endif %}
@@ -40,11 +40,11 @@
           <div class="dropdown-menu" aria-labelledby="navbarUserDropdown">
             {% get_current_language as LANGUAGE_CODE %}
             <a class="dropdown-item disabled" href="#">
-              {% trans "Language" %}: <span class="badge badge-secondary">{{ LANGUAGE_CODE }}</span>
+              {% trans "Язык" %}: <span class="badge badge-secondary">{{ LANGUAGE_CODE }}</span>
             </a>
-            <a class="dropdown-item {% view_active request 'accounts:profile' %}" href="{% url 'accounts:profile' %}">{% icon 'vcard' %} {% trans "Profile" %}</a>
+            <a class="dropdown-item {% view_active request 'accounts:profile' %}" href="{% url 'accounts:profile' %}">{% icon 'vcard' %} {% trans "Профиль" %}</a>
             <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fa fa-fw fa-power-off"></i> {% trans "Log Out" %}</a>
+            <a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fa fa-fw fa-power-off"></i> {% trans "Выйти" %}</a>
           </div>
         </li>
       </ul>

@@ -71,10 +71,10 @@ clear
 readonly APP_USER="wvcuser"
 readonly APP_REPO_URL="https://github.com/retspen/webvirtcloud.git"
 readonly APP_NAME="webvirtcloud"
-readonly APP_PATH="/srv/$APP_NAME"
+readonly APP_PATH="/opt/$APP_NAME"
 
 #readonly PYTHON="python3"
-readonly PYTHON=$python3
+readonly PYTHON=/opt/python-3.8.9/bin/python3.8/python
 
 progress () {
   spin[0]="-"
@@ -101,71 +101,53 @@ log () {
 }
 
 install_packages () {
-  echo -e "     \033[1;31mДистрибутив - $distro, версия - $version\033[0m"
+  echo -e "
+       \033[1;31mДистрибутив - $distro, версия - $version\033[0m
+       "
   case $distro in
     ubuntu|debian|AstraLinuxSE)
       for p in $PACKAGES; do
         if dpkg -s "$p" >/dev/null 2>&1; then
-          echo "  * $p already installed"
+          echo "  * $p уже установлено"
         else
-          echo "  * Installing $p"
+          echo "  * Установка $p"
           log "DEBIAN_FRONTEND=noninteractive apt-get install -y $p"
-        fi
-      done;
-      ;;
-    centos)
-      for p in $PACKAGES; do
-        if yum list installed "$p" >/dev/null 2>&1; then
-          echo "  * $p already installed"
-        else
-          echo "  * Installing $p"
-          log "yum -y install $p"
-        fi
-      done;
-      ;;
-    fedora)
-      for p in $PACKAGES; do
-        if dnf list installed "$p" >/dev/null 2>&1; then
-          echo "  * $p already installed"
-        else
-          echo "  * Installing $p"
-          log "dnf -y install $p"
         fi
       done;
       ;;
   esac
 }
 
-configure_nginx () {
-  # Remove default configuration 
-  rm /etc/nginx/nginx.conf
-  if [ -f /etc/nginx/sites-enabled/default ]; then
-    rm /etc/nginx/sites-enabled/default
-  fi
+# configure_nginx () {
+#   # Remove default configuration 
+#   rm /etc/nginx/nginx.conf
+#   if [ -f /etc/nginx/sites-enabled/default ]; then
+#     rm /etc/nginx/sites-enabled/default
+#   fi
 
-  chown -R "$nginx_group":"$nginx_group" /var/lib/nginx
-  # Copy new configuration and webvirtcloud.conf
-  echo "  * Copying Nginx configuration ($distro)"
-  cp "$APP_PATH"/conf/nginx/"$distro"_nginx.conf /etc/nginx/nginx.conf
-  cp "$APP_PATH"/conf/nginx/webvirtcloud.conf /etc/nginx/conf.d/
+#   chown -R "$nginx_group":"$nginx_group" /var/lib/nginx
+#   # Copy new configuration and webvirtcloud.conf
+#   echo "  * Copying Nginx configuration ($distro)"
+#   cp "$APP_PATH"/conf/nginx/"$distro"_nginx.conf /etc/nginx/nginx.conf
+#   cp "$APP_PATH"/conf/nginx/webvirtcloud.conf /etc/nginx/conf.d/
 
-  if [ -n "$fqdn" ]; then
-     fqdn_escape="$(echo -n "$fqdn"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
-     sed -i "s|\\(#server_name\\).*|server_name $fqdn_escape;|" "$nginxfile"
-  fi
+#   if [ -n "$fqdn" ]; then
+#      fqdn_escape="$(echo -n "$fqdn"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
+#      sed -i "s|\\(#server_name\\).*|server_name $fqdn_escape;|" "$nginxfile"
+#   fi
 
-  novncd_port_escape="$(echo -n "$novncd_port"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
-  sed -i "s|\\(server 127.0.0.1:\\).*|\\1$novncd_port_escape;|" "$nginxfile"
+#   novncd_port_escape="$(echo -n "$novncd_port"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
+#   sed -i "s|\\(server 127.0.0.1:\\).*|\\1$novncd_port_escape;|" "$nginxfile"
 
-}
+# }
 
-configure_supervisor () {
-  # Copy template supervisor service for gunicorn and novnc
-  echo "  * Copying supervisor configuration"
-  cp "$APP_PATH"/conf/supervisor/webvirtcloud.conf "$supervisor_conf_path"/"$supervisor_file_name"
-  nginx_group_escape="$(echo -n "$nginx_group"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
-  sed -i "s|^\\(user=\\).*|\\1$nginx_group_escape|" "$supervisor_conf_path/$supervisor_file_name"
-}
+# configure_supervisor () {
+#   # Copy template supervisor service for gunicorn and novnc
+#   echo "  * Copying supervisor configuration"
+#   cp "$APP_PATH"/conf/supervisor/webvirtcloud.conf "$supervisor_conf_path"/"$supervisor_file_name"
+#   nginx_group_escape="$(echo -n "$nginx_group"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
+#   sed -i "s|^\\(user=\\).*|\\1$nginx_group_escape|" "$supervisor_conf_path/$supervisor_file_name"
+# }
 
 create_user () {
   echo "* Creating webvirtcloud user."
@@ -180,6 +162,9 @@ create_user () {
 }
 
 run_as_app_user () {
+  echo -e "
+  \033[1;31mAPP_USER -> $APP_USER
+  \033[0m"
   if ! hash sudo 2>/dev/null; then
       su -c "$@" "$APP_USER"
   else
@@ -188,9 +173,9 @@ run_as_app_user () {
 }
 
 activate_python_environment () {
-    $pip3 install virtualenv
+    $PYTHON -m pip install virtualenv
     cd "$APP_PATH" || exit
-    python3 -m venv venv
+    $PYTHON -m venv venv
 #    virtualenv -p "$PYTHON" venv
     # shellcheck disable=SC1091
     source venv/bin/activate
@@ -203,18 +188,18 @@ print(''.join(random.SystemRandom().choice('abcdefghijklmnopqrstuvwxyz0123456789
 END
 }
 
-
 install_webvirtcloud () {
   create_user
  
-  echo "* Cloning $APP_NAME from github to the web directory."
+  echo -e "* Клонирование репозитория \033[1;32m$APP_NAME \033[0mиз github в веб-каталог."
   log "git clone $APP_REPO_URL $APP_PATH"
 
-  echo "* Configuring settings.py file."
+  echo -e "* Настройка \033[1;32msettings.py \033[0mфайла."
   cp "$APP_PATH/webvirtcloud/settings.py.template" "$APP_PATH/webvirtcloud/settings.py"
   
   secret_key=$(generate_secret_key)
-  echo "* Secret for Django generated: $secret_key"
+
+  echo "* Секретный ключ для Django сгенерирован: \033[1;32m$secret_key\033[0m"
   tzone_escape="$(echo -n "$tzone"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
   secret_key_escape="$(echo -n "$secret_key"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
   novncd_port_escape="$(echo -n "$novncd_port"|sed -e 's/[](){}<>=:\!\?\+\|\/\&$*.^[]/\\&/g')"
@@ -228,20 +213,18 @@ install_webvirtcloud () {
   sed -i "s|^\\(WS_PUBLIC_PORT = \\).*|\\1$novncd_public_port_escape|" "$APP_PATH/webvirtcloud/settings.py"
   sed -i "s|^\\(WS_HOST = \\).*|\\1\'$novncd_host_escape\'|" "$APP_PATH/webvirtcloud/settings.py"
 
-  echo "* Activate virtual environment."
+  echo "* Активация виртуальной среды."
   activate_python_environment
 
-  echo "* Install App's Python requirements."
-  echo -e "\033[1;31m$pip3 -V\033[0m"
-  pip3 install -U pip
-  pip3 install -r conf/requirements.txt -q
+  echo "* Установка Python зависимостей для приложения."
+  
+  $PYTHON -m pip install -U pip
+  $PYTHON -m pip install -r conf/requirements.txt -q
 #  $pip3 install --upgrade pip
 #  $pip3 install --requirement conf/requirements.txt --quiet
 
-  
   chown -R "$nginx_group":"$nginx_group" "$APP_PATH"
 
-  
   echo "* Django Migrate."
   log "$PYTHON $APP_PATH/manage.py migrate"
   $PYTHON $APP_PATH/manage.py migrate
@@ -251,8 +234,9 @@ install_webvirtcloud () {
 }
 
 set_firewall () {
+  echo "* Настройка Firewall."
   if [ "$(firewall-cmd --state)" == "running" ]; then
-    echo "* Configuring firewall to allow HTTP & novnc traffic."
+    echo "* Настройка брандмауэра для разрешения трафика HTTP и novnc."
     log "firewall-cmd --zone=public --add-port=http/tcp --permanent"
     log "firewall-cmd --zone=public --add-port=$novncd_port/tcp --permanent"
     #firewall-cmd --zone=public --add-port=$novncd_port/tcp --permanent
@@ -264,35 +248,35 @@ set_firewall () {
 }
 
 set_selinux () {
-  #Check if SELinux is enforcing
+  #Проверьте, принудительно ли SELinux
   if [ "$(getenforce)" == "Enforcing" ]; then
-    echo "* Configuring SELinux."
-    #Sets SELinux context type so that scripts running in the web server process are allowed read/write access
+    echo "* Настройка SELinux."
+    #Устанавливает тип контекста SELinux, чтобы скриптам, запущенным в процессе веб-сервера, был разрешен доступ для чтения/записи.
     chcon -R -h -t httpd_sys_rw_content_t "$APP_PATH/"
     setsebool -P httpd_can_network_connect 1
   fi
 }
 
 set_hosts () {
-  echo "* Setting up hosts file."
+  echo "* Настройка файла hosts."
   echo >> /etc/hosts "127.0.0.1 $(hostname) $fqdn"
 }
 
-restart_supervisor () {
-    echo "* Setting Supervisor to start on boot and restart."
-    log "systemctl enable $supervisor_service"
-    #systemctl enable $supervisor_service
-    log "systemctl restart $supervisor_service"
-    #systemctl restart $supervisor_service
-}
+# restart_supervisor () {
+#     echo "* Setting Supervisor to start on boot and restart."
+#     log "systemctl enable $supervisor_service"
+#     #systemctl enable $supervisor_service
+#     log "systemctl restart $supervisor_service"
+#     #systemctl restart $supervisor_service
+# }
 
-restart_nginx () {
-    echo "* Setting Nginx to start on boot and starting Nginx."
-    log "systemctl enable nginx.service"
-    #systemctl enable nginx.service
-    log "systemctl restart nginx.service"
-    #systemctl restart nginx.service
-}
+# restart_nginx () {
+#     echo "* Setting Nginx to start on boot and starting Nginx."
+#     log "systemctl enable nginx.service"
+#     #systemctl enable nginx.service
+#     log "systemctl restart nginx.service"
+#     #systemctl restart nginx.service
+# }
 
 
 if [[ -f /etc/lsb-release || -f /etc/debian_version ]]; then
@@ -318,46 +302,37 @@ fi
 sudo bash /mnt/mount.sh
 
 echo '
-      WEBVIRTCLOUD
+      КП КОП 2.0
 '
 
-echo "" 
-echo "  Welcome to Webvirtcloud Installer for CentOS, Fedora, Debian and Ubuntu!"
-echo ""
+echo -e " 
+\033[1;4;32mУстановка модуля управления виртуальными машинами КП КОП 2.0!\033[0m
+"
 shopt -s nocasematch
-case $distro in
-  *ubuntu*)
-    echo "  The installer has detected $distro version $version codename $codename."
-    distro=ubuntu
-    nginx_group=www-data
-    nginxfile=/etc/nginx/conf.d/$APP_NAME.conf
-    supervisor_service=supervisord
-    supervisor_conf_path=/etc/supervisor/conf.d
-    supervisor_file_name=webvirtcloud.conf
-    ;;
-  *debian*|*AstraLinuxSE*)
-    echo "  The installer has detected $distro version $version codename $codename."
-    distro=debian
-    nginx_group=www-data
-    nginxfile=/etc/nginx/conf.d/$APP_NAME.conf
-    supervisor_service=supervisor
-    supervisor_conf_path=/etc/supervisor/conf.d
-    supervisor_file_name=webvirtcloud.conf
-    ;;
-  *centos*|*redhat*|*ol*|*rhel*)
-    echo "  The installer has detected $distro version $version."
-    distro=centos
-    nginx_group=nginx
-    nginxfile=/etc/nginx/conf.d/$APP_NAME.conf
-    supervisor_service=supervisord
-    supervisor_conf_path=/etc/supervisord.d
-    supervisor_file_name=webvirtcloud.ini
-    ;;
-  *)
-    echo "  The installer was unable to determine your OS. Exiting for safety."
-    exit 1
-    ;;
-esac
+# case $distro in
+#   *ubuntu*)
+#     echo "  The installer has detected $distro version $version codename $codename."
+#     distro=ubuntu
+#     nginx_group=www-data
+#     nginxfile=/etc/nginx/conf.d/$APP_NAME.conf
+#     supervisor_service=supervisord
+#     supervisor_conf_path=/etc/supervisor/conf.d
+#     supervisor_file_name=webvirtcloud.conf
+#     ;;
+#   *debian*|*AstraLinuxSE*)
+#     echo "  The installer has detected $distro version $version codename $codename."
+#     distro=debian
+#     nginx_group=www-data
+#     nginxfile=/etc/nginx/conf.d/$APP_NAME.conf
+#     supervisor_service=supervisor
+#     supervisor_conf_path=/etc/supervisor/conf.d
+#     supervisor_file_name=webvirtcloud.conf
+#     ;;
+#   *)
+#     echo "  The installer was unable to determine your OS. Exiting for safety."
+#     exit 1
+#     ;;
+# esac
 
 echo -e "     \033[1;31mДистрибутив - $distro, версия - $version\033[0m"
 
@@ -368,60 +343,60 @@ until [[ $setupfqdn == "yes" ]] || [[ $setupfqdn == "no" ]]; do
 
   case $setupfqdn in
     [yY] | [yY][Ee][Ss] )
-    echo -n "  Q. What is the FQDN of your server? ($(hostname --fqdn)): "
+    echo -n "  Q. Какое полное доменное имя вашего сервера? ($(hostname --fqdn)): "
       read -r fqdn
       if [ -z "$fqdn" ]; then
       readonly fqdn="$(hostname --fqdn)"
       fi
       setupfqdn="yes"
-      echo "     Setting to $fqdn"
+      echo "     Установка на $fqdn"
       echo ""
       ;;
     [nN] | [n|N][O|o] )
       setupfqdn="no"
       ;;
-    *)  echo "  Invalid answer. Please type y or n"
+    *)  echo -e "  \033[1;31mНеверный ответ. Пожалуйста, введите \033[1;32my \033[1;31mили \033[1;32mn\033[0m"
       ;;
   esac
 done
 
-echo -n "  Q. Do you want to change NOVNC service port number?(Default: 6080) "
+echo -n "  Q. Вы хотите изменить номер сервисного порта NOVNC? (По умолчанию: 6080) "
 read -r novncd_port
 if [ -z "$novncd_port" ]; then
   readonly novncd_port=6080
 fi
-echo "     Setting novnc service port $novncd_port"
+echo "     Настройка порта службы novnc $novncd_port"
 echo ""
 
-echo -n "  Q. Do you want to change NOVNC public port number for reverse proxy(e.g: 80 or 443)?(Default: 6080) "
+echo -n "  Q. Вы хотите изменить номер публичного порта NOVNC для обратного прокси (например, 80 или 443)? (По умолчанию: 6080) "
 read -r novncd_public_port
 if [ -z "$novncd_public_port" ]; then
   readonly novncd_public_port=6080
 fi
-echo "     Setting novnc public port $novncd_public_port"
+echo "     Настройка публичного порта novnc $novncd_public_port"
 echo ""
 
-echo -n "  Q. Do you want to change NOVNC host listen ip?(Default: 0.0.0.0) "
+echo -n "  Q. Вы хотите изменить IP-адрес прослушивания хоста NOVNC? (По умолчанию: 0.0.0.0) "
 read -r novncd_host
 if [ -z "$novncd_host" ]; then
   readonly novncd_host="0.0.0.0"
 fi
-echo "     Setting novnc host ip $novncd_host"
+echo "     Настройка IP-адреса хоста novnc $novncd_host"
 echo ""
 
 
 case $distro in
   debian)
   # shellcheck disable=SC2072
-  if [[ "$version" -ge 9 ]] || [[ "$version" == 1.6 ]]; then
+  if [[ "$version" -ge 9 ]] || [[ "$version" == "1.6" ]]; then
     # Install for Debian 9.x / 10.x
     tzone=\'$(cat /etc/timezone)\'
 
-    echo -n "* Updating installed packages."
+    echo -n "* Обновление установленных пакетов в ОС."
     log "apt-get update && apt-get -y upgrade" & pid=$!
     progress
 
-    echo "*  Installing OS requirements."
+    echo "*  Установка зависимостей ОС."
 #    PACKAGES="git virtualenv python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
     PACKAGES="git python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
     install_packages
@@ -430,25 +405,25 @@ case $distro in
 
     install_webvirtcloud
 
-    echo "* Configuring Nginx."
-    configure_nginx
+    # echo "* Configuring Nginx."
+    # configure_nginx
 
-    echo "* Configuring Supervisor."
-    configure_supervisor
+    # echo "* Configuring Supervisor."
+    # configure_supervisor
 
-    restart_supervisor
-    restart_nginx
+    # restart_supervisor
+    # restart_nginx
   fi
   ;;
   AstraLinuxSE)
     # Install for Debian 9.x / 10.x
     tzone=\'$(cat /etc/timezone)\'
 
-    echo -n "* Updating installed packages."
+    echo -n "* Обновление установленных пакетов."
     log "apt-get update && apt-get -y upgrade" & pid=$!
     progress
 
-    echo "*  Installing OS requirements."
+    echo "*  Установка зависимостей ОС."
     PACKAGES="git virtualenv python3-virtualenv python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs uuid"
     install_packages
 
@@ -465,78 +440,15 @@ case $distro in
 #    restart_supervisor
 #    restart_nginx
   ;;
-  ubuntu)
- if [ "$version" == "18.04" ] || [ "$version" == "20.04" ]; then
-    # Install for Ubuntu 18 / 20
-    tzone=\'$(cat /etc/timezone)\'
-
-    echo -n "* Updating installed packages."
-    log "apt-get update && apt-get -y upgrade" & pid=$!
-    progress
-
-    echo "*  Installing OS requirements."
-    PACKAGES="git virtualenv python3-virtualenv python3-pip python3-dev python3-lxml libvirt-dev zlib1g-dev libxslt1-dev nginx supervisor libsasl2-modules gcc pkg-config python3-guestfs"
-    install_packages
-
-    set_hosts
-
-    install_webvirtcloud
-
-    echo "* Configuring Nginx."
-    configure_nginx
-
-    echo "* Configuring Supervisor."
-    configure_supervisor
-
-    restart_supervisor
-    restart_nginx
-
-  fi  
-  ;;
-  centos)
-  if [[ "$version" =~ ^8 ]]; then
-    # Install for CentOS/Redhat 8
-    tzone=\'$(timedatectl|grep "Time zone"| awk '{print $3}')\'
-
-    echo "* Adding wget & epel-release repository."
-    log "yum -y install wget epel-release"
-
-    echo "* Installing OS requirements."
-    PACKAGES="git python3-virtualenv python3-devel libvirt-devel glibc gcc nginx supervisor python3-lxml python3-libguestfs iproute-tc cyrus-sasl-md5"
-    install_packages
-
-    set_hosts
-
-    install_webvirtcloud
-
-    echo "* Configuring Nginx."
-    configure_nginx
-
-    echo "* Configuring Supervisor."
-    configure_supervisor
-    
-    set_firewall 
-    
-    set_selinux
-
-    restart_supervisor
-    restart_nginx
-    
-
-  else
-    echo "Unsupported CentOS version. Version found: $version"
-    exit 1
-  fi
-  ;;
 esac
 
 
 echo ""
-echo "  ***Open http://$fqdn to login and password to: admin.***"
+echo "  ***Открыть http://$fqdn, логин и пароль для входа: admin.***"
 echo ""
 echo ""
-echo "* Cleaning up..."
+echo "* Очистка установки..."
 rm -f webvirtcloud.sh
 rm -f install.sh
-echo "* Finished!"
+echo "* Всё сделано!"
 sleep 1

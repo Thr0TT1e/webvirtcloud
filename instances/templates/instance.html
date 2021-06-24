@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "Instance" %} - {{ instance.name }}{% endblock %}
+{% block title %}{% trans "Экземпляры" %} - {{ instance.name }}{% endblock %}
 
 {% block page_heading %}
 {{ instance.name }}{% if instance.title %} ({{ instance.title }}){% endif %}
@@ -13,26 +13,26 @@
      <div>
         <div>
             {% if instance.status == 5 %}
-               <span class="badge badge-danger">{% trans "Off" %}</span>
+               <span class="badge badge-danger">{% trans "Выключенный" %}</span>
             {% endif %}
             {% if instance.status == 1 %}
-                <span class="badge badge-success">{% trans "Active" %}</span>
+                <span class="badge badge-success">{% trans "Активный" %}</span>
             {% endif %}
             {% if instance.status == 3 %}
-                <span class="badge badge-warning">{% trans "Suspend" %}</span>
+                <span class="badge badge-warning">{% trans "Приостановленный" %}</span>
             {% endif %}
             |
             <span {%if instance.guest_agent %}
                     {% if instance.guest_agent_ready %}
                         class="badge badge-success"
-                        title="{% trans "Guest Agent Enabled & Connected" %}"
+                        title="{% trans "Гостевой агент включен и подключен" %}"
                     {% else %}
                         class="badge badge-warning"
-                        title="{% trans "Guest Agent Enabled but not Connected" %}"
+                        title="{% trans "Гостевой агент включен, но не подключен" %}"
                     {% endif %}
                 {% else %}
                     class="badge badge-danger"
-                    title="{% trans "Guest Agent Not Enabled & Not Connected" %}"
+                    title="{% trans "Гостевой агент не включен и не подключен" %}"
                 {% endif %}><i class="fa fa-plug"></i></span>
             |
             {% if instance.snapshots %}
@@ -47,7 +47,7 @@
             {{ instance.cur_memory }} {% trans "MB" %} {% trans "RAM" %}
             |
             {% for disk in instance.disks %}
-                {{ disk.size|filesizeformat }} {% trans "Disk" %} |
+                {{ disk.size|filesizeformat }} {% trans "Диск" %} |
             {% endfor %}
             {% for net in instance.networks %}
                {% for ipv4 in net.ipv4 %}
@@ -55,17 +55,17 @@
                {% endfor %}
             {% endfor %}
             {% if instance.guest_agent_ready %}
-            <a class="text-secondary" title="{% trans 'Show Instance OS details' %}" onclick="get_osinfo()">
+            <a class="text-secondary" title="{% trans 'Показать сведения об ОС экземпляра' %}" onclick="get_osinfo()">
                 <span class="fa fa-info-circle"></span>
             </a>
             {% endif %}
-            <a class="text-secondary" href="{% url 'instances:instance' instance.id %}" title="{% trans 'Refresh instance info' %}">
+            <a class="text-secondary" href="{% url 'instances:instance' instance.id %}" title="{% trans 'Обновить информацию об экземпляре' %}">
                 <span class="fa fa-refresh"></span>
             </a>
         </div>
         {% if user_quota_msg %}
             <div class="alert alert-warning fade show">
-            {{ user_quota_msg|capfirst }} {% trans "quota reached" %}.
+            {{ user_quota_msg|capfirst }} {% trans "квота достигнута" %}.
             </div>
         {% endif %}
         <hr>
@@ -79,45 +79,45 @@
                     <li class="nav-item">
                         <a href="#power" class="nav-link action-button active" aria-controls="power" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-power-off fa-2x" aria-hidden="true"></span>
-                            {% trans "Power" %}
+                            {% trans "Включение" %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="#access" class="nav-link action-button" aria-controls="access" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-lock" aria-hidden="true"></span>
-                            {% trans "Access" %}
+                            {% trans "Доступ" %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="#resize" class="nav-link action-button" aria-controls="resize" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-expand" aria-hidden="true"></span>
-                            {% trans "Resize" %}
+                            {% trans "Изменить размер" %}
                         </a>
                     </li>
                     {% if allow_admin_or_not_template %}
                         <li class="nav-item">
                         <a href="#snapshots" class="nav-link action-button" aria-controls="snapshots" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-camera" aria-hidden="true"></span>
-                            {% trans "Snapshot" %}
+                            {% trans "Снимок ВМ" %}
                         </a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
                         <a href="#settings" class="nav-link action-button" aria-controls="settings" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-cog" aria-hidden="true"></span>
-                            {% trans "Settings" %}
+                            {% trans "Настройки" %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="#graphics" id="chartgraphs" class="nav-link action-button" aria-controls="graphics" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-bar-chart" aria-hidden="true"></span>
-                            {% trans "Stats" %}
+                            {% trans "Статистика" %}
                         </a>
                     </li>
                      <li class="nav-item">
                         <a href="#undefine" class="nav-link action-button" aria-controls="undefine" role="tab" data-toggle="tab">
                             <span id="action-block" class="fa fa-trash" aria-hidden="true"></span>
-                            {% trans "Destroy" %}
+                            {% trans "Уничтожить" %}
                         </a>
                     </li>
                 </ul>
