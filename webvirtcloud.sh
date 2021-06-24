@@ -75,6 +75,7 @@ readonly APP_PATH="/opt/$APP_NAME"
 
 #readonly PYTHON="python3"
 readonly PYTHON=/opt/python-3.8.9/bin/python3.8/python
+readonly PIP3=/home/user/.local/bin/pip3
 
 progress () {
   spin[0]="-"
@@ -150,7 +151,7 @@ install_packages () {
 # }
 
 create_user () {
-  echo "* Creating webvirtcloud user."
+  echo "* Создание пользователя."
 
   if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ] || [ "$distro" == "AstraLinuxSE" ] ; then
     adduser --quiet --disabled-password --gecos '""' "$APP_USER"
@@ -173,7 +174,7 @@ run_as_app_user () {
 }
 
 activate_python_environment () {
-    $PYTHON -m pip install virtualenv
+    $PIP3 -m pip install virtualenv
     cd "$APP_PATH" || exit
     $PYTHON -m venv venv
 #    virtualenv -p "$PYTHON" venv
@@ -218,8 +219,8 @@ install_webvirtcloud () {
 
   echo "* Установка Python зависимостей для приложения."
   
-  $PYTHON -m pip install -U pip
-  $PYTHON -m pip install -r conf/requirements.txt -q
+  $PIP3 install -U pip
+  $PIP3 install -r conf/requirements.txt -q
 #  $pip3 install --upgrade pip
 #  $pip3 install --requirement conf/requirements.txt --quiet
 
